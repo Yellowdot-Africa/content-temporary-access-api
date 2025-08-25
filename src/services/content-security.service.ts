@@ -51,11 +51,19 @@ export const listContentSecurities = async () => {
   return installs;
 };
 
-export const getContentSecurityByMsisdn = async (msisdn: string) => {
-  console.log(`Fetching Content security by msisdn: ${msisdn}`);
-  const install = await repo.findOneBy({ msisdn });
-  if (!install) {
-    console.warn(`No Content security found for msisdn: ${msisdn}`);
+export const filterContentSecurity = async (msisdn?: string, service_id?: string) => {
+  console.log(`Filtering Content Security with msisdn: ${msisdn}, service_id: ${service_id}`);
+
+  const whereClause: any = {};
+  if (msisdn) whereClause.msisdn = msisdn;
+  if (service_id) whereClause.service_id = service_id;
+
+  const results = await repo.find({ where: whereClause });
+
+  if (!results || results.length === 0) {
+    console.warn(`No Content Security records found for msisdn: ${msisdn}, service_id: ${service_id}`);
   }
-  return install;
+
+  return results;
 };
+

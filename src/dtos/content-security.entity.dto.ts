@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class ContentSecurityDto {
 
@@ -33,11 +33,16 @@ export class ContentSecurityDto {
 }
 
 
-export class ContentSecurityParamDto {
+export class ContentSecurityQueryDto {
+
 
   @IsString()
-  @IsNotEmpty()
-  msisdn!: string;
+  @IsOptional()
+  msisdn?: string;
+
+  @IsString()
+  @IsOptional()
+  service_id?: string;
 
 }
 

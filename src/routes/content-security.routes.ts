@@ -1,12 +1,12 @@
 import { Router } from "express";
 import {
   createContentSecurity,
-  getContentSecurity as getContentSecurities ,
-  getContentSecurityByMsisdn,
+  filterContentSecurity,
+  getContentSecurity as getContentSecurities,
 } from "../controllers/content-security.controller";
 import { validationMiddleware } from "../middlewares/validation-middleware";
 
-import { ContentSecurityDto, ContentSecurityParamDto } from "../dtos/content-security.entity.dto";
+import { ContentSecurityDto, ContentSecurityQueryDto } from "../dtos/content-security.entity.dto";
 
 const router = Router();
 
@@ -16,12 +16,14 @@ router.post(
   createContentSecurity
 );
 
-router.get("/", getContentSecurities );
+router.get("/", getContentSecurities);
 
 router.get(
-  "/msisdn/:msisdn",
-  validationMiddleware(ContentSecurityParamDto, "params"),  // validate req.params for msisdn
-  getContentSecurityByMsisdn
+  "/content-security/filter",
+  validationMiddleware(ContentSecurityQueryDto, "query"),  // ✅ validate optional query params: msisdn & service_id
+  filterContentSecurity  // ✅ renamed handler to reflect filtering logic
 );
+
+
 
 export default router;

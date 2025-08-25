@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import * as service from "../services/content-security.service";
-import { ContentSecurityDto, ContentSecurityParamDto } from "../dtos/content-security.entity.dto";
+import { ContentSecurityDto, ContentSecurityQueryDto } from "../dtos/content-security.entity.dto";
 
 export const createContentSecurity = async (req: Request, res: Response) => {
   try {
@@ -31,21 +31,23 @@ export const getContentSecurity = async (_req: Request, res: Response) => {
   }
 };
 
-export const getContentSecurityByMsisdn = async (req: Request, res: Response) => {
+export const filterContentSecurity = async (req: Request, res: Response) => {
   try {
-    const dto = (req as any).validatedData as ContentSecurityParamDto;
-    console.log(`Fetching Content Security by msisdn: ${dto.msisdn}`);
-    
-    const install = await service.getContentSecurityByMsisdn(dto.msisdn);
-    if (!install) {
-      console.warn(`Content Security not found for msisdn: ${dto.msisdn}`);
-      return res.status(404).json({ error: "Installation not found" });
+    const dto = (req as any).validatedData as ContentSecurityQueryDto;
+    console.log(`Filtering Content Security with msisdn: ${dto.msisdn}, service_id: ${dto.service_id}`);
+
+    const results = await service.filterContentSecurity(dto.msisdn, dto.service_id);
+
+    if (!results || results.length === 0) {
+      console.warn(`No Content Security records found for msisdn: ${dto.msisdn}, service_id: ${dto.service_id}`);
+      return res.status(404).json({ error: "No records found" });
     }
-    
-    console.log("Content Security found:", install);
-    res.json(install);
+
+    console.log("Filtered Content Security results:", results);
+    res.json(results);
   } catch (err) {
-    console.error("Error fetching Content Security by msisdn:", err);
+    console.error("Error filtering Content Security:", err);
     res.status(500).json({ error: (err as Error).message });
   }
 };
+

@@ -19,23 +19,30 @@ function formatErrors(errors: ValidationError[]) {
   return result;
 }
 
-export function validationMiddleware<T extends object>(
+export function validationMiddleware
+<T extends object>(
   dtoClass: new () => T,
-  source: "body" | "params" = "body"
+  source: "body" | "params" | "query" = "body"  // ✅ added "query" as valid option
 ) {
   return async (req: Request, res: Response, next: NextFunction) => {
-    const plain = source === "body" ? req.body : req.params;
+    const plain =
+      source === "body" ? req.body :
+      source === "params" ? req.params :
+      source === "query" ? req.query :
+      {};
+
     const dto = plainToInstance(dtoClass, plain);
     const errors = await validate(dto);
-    
+
     if (errors.length > 0) {
       return res.status(400).json({
         message: "Validation failed",
         errors: formatErrors(errors),
       });
     }
-    
+
     (req as any).validatedData = dto;
     next();
   };
 }
+

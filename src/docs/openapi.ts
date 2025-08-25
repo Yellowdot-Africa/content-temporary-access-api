@@ -24,13 +24,38 @@ export const openapiSpec = {
           content: {
             "application/json": {
               schema: {
-                $ref: "#/components/schemas/CreateContentSecurityDto", // ✅ use only msisdn + consented_to_install
+                $ref: "#/components/schemas/CreateContentSecurityDto",
               },
             },
           },
         },
         responses: {
           "201": { description: "Created" },
+        },
+      },
+    },
+    "/api/content-security/filter": {
+      get: {
+        summary: "Filter Content Security by optional msisdn and service_id",
+        parameters: [
+          {
+            name: "msisdn",
+            in: "query",
+            required: false,
+            schema: { type: "string" },
+            description: "Optional MSISDN to filter results",
+          },
+          {
+            name: "service_id",
+            in: "query",
+            required: false,
+            schema: { type: "string" },
+            description: "Optional service ID to filter results",
+          },
+        ],
+        responses: {
+          "200": { description: "Filtered results returned" },
+          "404": { description: "No matching records found" },
         },
       },
     },
@@ -54,7 +79,7 @@ export const openapiSpec = {
   },
   components: {
     schemas: {
-      CreateContentSecurityDto: { // ✅ new schema for POST
+      CreateContentSecurityDto: {
         type: "object",
         properties: {
           msisdn: { type: "string" },
@@ -63,7 +88,7 @@ export const openapiSpec = {
           ext_ref: { type: "string" },
           transaction_id: { type: "string" },
           source: { type: "string" },
-          mno: { type: "string" }
+          mno: { type: "string" },
         },
         required: ["msisdn", "consented_to_install"],
       },
