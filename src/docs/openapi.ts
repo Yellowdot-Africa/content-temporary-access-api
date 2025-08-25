@@ -58,24 +58,7 @@ export const openapiSpec = {
           "404": { description: "No matching records found" },
         },
       },
-    },
-    "/api/content-security/msisdn/{msisdn}": {
-      get: {
-        summary: "Get Content Security by MSISDN",
-        parameters: [
-          {
-            name: "msisdn",
-            in: "path",
-            required: true,
-            schema: { type: "string" },
-          },
-        ],
-        responses: {
-          "200": { description: "OK" },
-          "404": { description: "Not Found" },
-        },
-      },
-    },
+    }
   },
   components: {
     schemas: {

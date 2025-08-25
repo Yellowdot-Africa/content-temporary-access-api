@@ -12,18 +12,17 @@ const router = Router();
 
 router.post(
   "/",
-  validationMiddleware(ContentSecurityDto, "body"),  // validate req.body for POST
+  validationMiddleware(ContentSecurityDto, "body"),
   createContentSecurity
 );
 
 router.get("/", getContentSecurities);
 
 router.get(
-  "/content-security/filter",
-  validationMiddleware(ContentSecurityQueryDto, "query"),  // ✅ validate optional query params: msisdn & service_id
-  filterContentSecurity  // ✅ renamed handler to reflect filtering logic
+  "/filter",
+  validationMiddleware(ContentSecurityQueryDto, "query"),
+  filterContentSecurity
 );
-
 
 
 export default router;

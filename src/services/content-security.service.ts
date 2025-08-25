@@ -54,6 +54,10 @@ export const listContentSecurities = async () => {
 export const filterContentSecurity = async (msisdn?: string, service_id?: string) => {
   console.log(`Filtering Content Security with msisdn: ${msisdn}, service_id: ${service_id}`);
 
+  if (!msisdn && !service_id) {
+    throw new Error("At least one of msisdn or service_id must be provided.");
+  }
+
   const whereClause: any = {};
   if (msisdn) whereClause.msisdn = msisdn;
   if (service_id) whereClause.service_id = service_id;
@@ -66,4 +70,5 @@ export const filterContentSecurity = async (msisdn?: string, service_id?: string
 
   return results;
 };
+
 
