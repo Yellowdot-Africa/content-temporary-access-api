@@ -27,8 +27,11 @@ export class ContentSecurity {
   mno!: string;
 
   @CreateDateColumn({ type: "datetime" })
-  created_at!: Date;
+  expires_at!: Date;
 
   @UpdateDateColumn({ type: "datetime" })
   updated_at!: Date;
+
+  @CreateDateColumn({ type: "datetime" })
+  created_at!: Date;
 }
