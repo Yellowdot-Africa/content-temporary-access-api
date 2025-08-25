@@ -1,6 +1,6 @@
 import { app } from "./app";
+import { AppDataSource } from "././config/db";
 import dotenv from "dotenv";
-import { AppDataSource } from "./src/config/db";
 
 dotenv.config();
 
