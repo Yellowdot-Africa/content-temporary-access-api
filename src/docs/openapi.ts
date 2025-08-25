@@ -10,7 +10,7 @@ export const openapiSpec = {
     },
   ],
   paths: {
-    "/api/ContentSecurity": {
+    "/api/content-security": {
       get: {
         summary: "Get list of Content Securitys",
         responses: {
@@ -34,7 +34,7 @@ export const openapiSpec = {
         },
       },
     },
-    "/api/ContentSecurity/msisdn/{msisdn}": {
+    "/api/content-security/msisdn/{msisdn}": {
       get: {
         summary: "Get Content Security by MSISDN",
         parameters: [

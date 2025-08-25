@@ -3,6 +3,6 @@ import contentSecurityRoutes from "./routes/content-security.routes";
 
 const router = Router();
 
-router.use("/ContentSecurity", contentSecurityRoutes);
+router.use("/content-security", contentSecurityRoutes);
 
 export default router;

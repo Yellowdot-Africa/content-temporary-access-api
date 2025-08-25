@@ -22,7 +22,7 @@ export const getContentSecurity = async (_req: Request, res: Response) => {
     console.log("Fetching all Content Securitys");
     
     const installs = await service.listContentSecurities();
-    console.log(`Fetched ${installs.length} installations`);
+    console.log(`Fetched ${installs.length} Content Securities`);
     
     res.json(installs);
   } catch (err) {
