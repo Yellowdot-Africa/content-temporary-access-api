@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 export const openapiSpec = {
   openapi: "3.0.3",
   info: {
@@ -6,7 +9,7 @@ export const openapiSpec = {
   },
   servers: [
     {
-      url: "http://localhost:4000",
+      url: `${process.env.BASE_URL}`
     },
   ],
   paths: {
