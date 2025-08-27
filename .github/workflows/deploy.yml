@@ -1,4 +1,4 @@
-name: Deploy content-temporary-access-api
+name: Deploy Content Temporary Access API
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,6 +21,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Run ESLint
+        run: npm run lint
+
       - name: Build project
         run: npm run build
 
@@ -30,7 +33,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.DEPLOY_KEY_YD_TELECEL }}
-          source: "dist/*,package.json,package-lock.json,.env"
+          source: "."
           target: "/home/${{ secrets.SSH_USER }}/PROJECTS/content-temporary-access-api"
 
       - name: Run remote commands on server
@@ -41,5 +44,7 @@ jobs:
           key: ${{ secrets.DEPLOY_KEY_YD_TELECEL }}
           script: |
             cd /home/${{ secrets.SSH_USER }}/PROJECTS/content-temporary-access-api
-            npm ci --omit=dev
-            pm2 reload content-temporary-access-api || pm2 start dist/main.js --name content-temporary-access-api
+            # Create .env file from secret
+            echo "${{ secrets.ENV_FILE_CONTENTS }}" > .env
+            npm install --production
+            pm2 restart content-temporary-access-api || pm2 start dist/main.js --name content-temporary-access-api
