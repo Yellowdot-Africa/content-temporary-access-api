@@ -10,38 +10,50 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      # 1. Checkout code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      # 2. Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: '18'
+          cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
+      # 3. Install dependencies
+      - name: Install Dependencies
+        run: npm install
 
-      - name: Build project
+      # 4. Build project (TypeScript -> dist/)
+      - name: Build Project
         run: npm run build
 
-      - name: Copy build to server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.DEPLOY_KEY_YD_TELECEL }}
-          source: "."
-          target: "/home/${{ secrets.SSH_USER }}/PROJECTS/content-temporary-access-api"
-
-      - name: Run remote commands on server
+      # 5. Deploy over SSH
+      - name: Deploy API to Server
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.DEPLOY_KEY_YD_TELECEL }}
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
           script: |
-            cd /home/${{ secrets.SSH_USER }}/PROJECTS/content-temporary-access-api
-            # Create .env file from secret
-            echo "${{ secrets.ENV_FILE_CONTENTS }}" > .env
+            cd /home/***/PROJECTS/content-temporary-access-api
+
+            # Create .env file from GitHub secret
+            echo "${{ secrets.ENV_FILE }}" > .env
+
+            # Pull latest code
+            git fetch --all
+            git reset --hard origin/main
+
+            # Install production dependencies
             npm install --production
-            pm2 restart content-temporary-access-api || pm2 start dist/main.js --name content-temporary-access-api
+
+            # Build the project
+            npm run build
+
+            # Restart with PM2 (start if not running yet)
+            pm2 restart content-temporary-access-api || pm2 start dist/server.js --name content-temporary-access-api
+
+            # Save PM2 process list for persistence
+            pm2 save
