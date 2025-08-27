@@ -1,4 +1,4 @@
-name: Deploy Content Temporary Access API
+name: Deploy content-temporary-access-api
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,17 +24,13 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Create .env file
-        run: |
-          echo "${{ secrets.ENV_FILE_CONTENTS }}" > .env
-
       - name: Copy build to server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.DEPLOY_KEY_YD_TELECEL }}
-          source: "."
+          source: "dist/*,package.json,package-lock.json,.env"
           target: "/home/${{ secrets.SSH_USER }}/PROJECTS/content-temporary-access-api"
 
       - name: Run remote commands on server
@@ -45,5 +41,5 @@ jobs:
           key: ${{ secrets.DEPLOY_KEY_YD_TELECEL }}
           script: |
             cd /home/${{ secrets.SSH_USER }}/PROJECTS/content-temporary-access-api
-            npm install --production
-            pm2 restart content-temporary-access-api || pm2 start dist/main.js --name content-temporary-access-api
+            npm ci --omit=dev
+            pm2 reload content-temporary-access-api || pm2 start dist/main.js --name content-temporary-access-api
