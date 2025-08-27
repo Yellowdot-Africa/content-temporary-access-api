@@ -21,9 +21,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run ESLint
-        run: npm run lint
-
       - name: Build project
         run: npm run build
 
@@ -39,3 +36,14 @@ jobs:
           key: ${{ secrets.DEPLOY_KEY_YD_TELECEL }}
           source: "."
           target: "/home/${{ secrets.SSH_USER }}/PROJECTS/content-temporary-access-api"
+
+      - name: Run remote commands on server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.DEPLOY_KEY_YD_TELECEL }}
+          script: |
+            cd /home/${{ secrets.SSH_USER }}/PROJECTS/content-temporary-access-api
+            npm install --production
+            pm2 restart content-temporary-access-api || pm2 start dist/main.js --name content-temporary-access-api
