@@ -10,50 +10,60 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout code
-      - name: Checkout Repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Setup Node.js
-      - name: Setup Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
+          node-version: 18
 
-      # 3. Install dependencies
-      - name: Install Dependencies
-        run: npm install
+      - name: Install dependencies
+        run: npm ci
 
-      # 4. Build project (TypeScript -> dist/)
-      - name: Build Project
+      - name: Build project
         run: npm run build
 
-      # 5. Deploy over SSH
-      - name: Deploy API to Server
+      - name: Copy repo to server (includes dist/)
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.DEPLOY_KEY_YD_TELECEL }}
+          source: "."
+          target: "/home/${{ secrets.SSH_USER }}/PROJECTS/content-temporary-access-api"
+
+      - name: Configure and restart on server
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.DEPLOY_KEY_YD_TELECEL }}
           script: |
-            cd /home/***/PROJECTS/content-temporary-access-api
+            set -e
+            cd /home/${{ secrets.SSH_USER }}/PROJECTS/content-temporary-access-api
 
-            # Create .env file from GitHub secret
-            echo "${{ secrets.ENV_FILE }}" > .env
+            # Create .env from whichever secret you use
+            echo "${{ secrets.ENV_FILE_CONTENTS }}" > .env
+            if [ ! -s .env ]; then
+              echo "${{ secrets.ENV_FILE }}" > .env
+            fi
 
-            # Pull latest code
-            git fetch --all
-            git reset --hard origin/main
+            # Install only prod deps
+            npm ci --omit=dev
 
-            # Install production dependencies
-            npm install --production
+            # Ensure build artifact exists (built in CI and copied up)
+            if [ ! -f dist/server.js ]; then
+              echo "ERROR: dist/server.js not found. Make sure 'npm run build' ran before SCP."
+              ls -la dist || true
+              exit 1
+            fi
 
-            # Build the project
-            npm run build
+            # Restart (or first start) with updated env
+            if pm2 describe content-temporary-access-api > /dev/null 2>&1; then
+              pm2 restart content-temporary-access-api --update-env
+            else
+              pm2 start dist/server.js --name content-temporary-access-api
+            fi
 
-            # Restart with PM2 (start if not running yet)
-            pm2 restart content-temporary-access-api || pm2 start dist/server.js --name content-temporary-access-api
-
-            # Save PM2 process list for persistence
             pm2 save
