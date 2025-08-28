@@ -13,4 +13,4 @@ app.use(cors());
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(openapiSpec));
 
 // API routes
-app.use("/api", routes);
+app.use("/api/v1", routes);

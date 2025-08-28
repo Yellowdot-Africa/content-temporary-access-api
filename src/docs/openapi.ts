@@ -13,7 +13,7 @@ export const openapiSpec = {
     },
   ],
   paths: {
-    "/api/content-security": {
+    "/api/v1/content-security": {
       get: {
         summary: "Get list of Content Securitys",
         responses: {
@@ -37,7 +37,7 @@ export const openapiSpec = {
         },
       },
     },
-    "/api/content-security/filter": {
+    "/api/v1/content-security/filter": {
       get: {
         summary: "Filter Content Security by optional msisdn and service_id",
         parameters: [
