@@ -16,7 +16,7 @@ export const upsertContentSecurity = async (data: ContentSecurityDto): Promise<C
   try {
     console.log(`Upserting Content Security for msisdn: ${data.msisdn}`);
 
-    const existing = await repo.findOne({ where: { msisdn: data.msisdn } });
+    const existing = await repo.findOne({ where: { msisdn: data.msisdn, service_id: data.service_id } });
 
     if (existing) {
       // ✅ Already has access that’s still valid
