@@ -1,9 +1,12 @@
-import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, Matches } from 'class-validator';
 
 export class ContentSecurityDto {
 
   @IsString()
   @IsNotEmpty()
+  @Matches(/^27\d{9}$/, {
+    message: "MSISDN must start with '27' and be exactly 11 digits long",
+  })
   msisdn!: string;
 
   @IsString()
@@ -35,9 +38,11 @@ export class ContentSecurityDto {
 
 export class ContentSecurityQueryDto {
 
-
   @IsString()
   @IsOptional()
+  @Matches(/^27\d{9}$/, {
+    message: "MSISDN must start with '27' and be exactly 11 digits long",
+  })
   msisdn?: string;
 
   @IsString()
