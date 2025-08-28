@@ -1,4 +1,5 @@
-import { IsString, IsNotEmpty, IsOptional, Matches } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, Matches, IsEnum } from 'class-validator';
+import { ServiceId } from '../types/content-security-response';
 
 export class ContentSecurityDto {
 
@@ -11,6 +12,9 @@ export class ContentSecurityDto {
 
   @IsString()
   @IsNotEmpty()
+  @IsEnum(ServiceId, {
+    message: "service_id must be either 'mtn_sa' or 'vodacom_sa' or 'cell_sa' or 'telkom_sa'",
+  })
   service_id!: string;
 
   @IsString()
@@ -47,6 +51,9 @@ export class ContentSecurityQueryDto {
 
   @IsString()
   @IsOptional()
+  @IsEnum(ServiceId, {
+    message: "service_id must be either 'mtn_sa' or 'vodacom_sa' or 'cell_sa' or 'telkom_sa'",
+  })
   service_id?: string;
 
 }
