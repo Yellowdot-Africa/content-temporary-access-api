@@ -5,7 +5,7 @@ export interface ContentSecurityResponse {
     message?: string; // ✅ optional now
 };
 
-export enum ServiceId {
+export enum Mnos {
     MTN_SA = "mtn_sa",
     CELL_SA = "cell_sa",
     VODACOM_SA = "vodacom_sa",
