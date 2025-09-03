@@ -102,13 +102,8 @@ export class ContentSecurityController {
       const upsert = await service.upsertContentSecurity(dto);
       console.log("Content Security created successfully:", upsert);
 
-      // Assuming upsert contains these properties or adapt accordingly
-      res.status(201).json({
-        message: "New access granted for 24 hours",
-        msisdn: upsert.msisdn,
-        service_id: upsert.service_id,
-        expires_at: upsert.expires_at,
-      });
+      res.status(201).json(upsert);
+
     } catch (err) {
       console.error("Error creating Content Security:", err);
       res.status(500).json({ error: (err as Error).message });
