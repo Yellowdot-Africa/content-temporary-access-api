@@ -27,10 +27,14 @@ const swaggerSpec = swaggerJSDoc({
       },
     ],
   },
-  apis: [path.join(__dirname, "./controllers/**/*.ts")], // ensure your controllers have updated Swagger comments
+  // ✅ Include both TS and JS so swagger works after build
+  apis: [
+    path.join(__dirname, "./controllers/**/*.ts"),
+    path.join(__dirname, "./controllers/**/*.js"),
+  ],
 });
 
-// Serve Swagger docs at /docs route
+// Serve Swagger docs at /docs
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Use API routes prefixed with /api/v1
