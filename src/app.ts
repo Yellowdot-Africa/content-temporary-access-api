@@ -16,10 +16,9 @@ const swaggerSpec = swaggerJSDoc({
   definition: {
     openapi: "3.0.3",
     info: {
-      title: "Content Security API",
+      title: "Content Security Temporary Access API",
       version: "1.0.0",
-      description: `API documentation for Content Security Temporary Access.
-      This API manages user content security permissions granting temporary access valid for 24 hours.`,
+      description: `This API facilitates the assignment of temporary content security permissions to users, enabling controlled access for a duration of 24 hours.`,
     },
     servers: [
       {
