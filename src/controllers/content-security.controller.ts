@@ -96,20 +96,29 @@ export class ContentSecurityController {
    *         description: Server error
    */
   async createContentSecurity(req: Request, res: Response) {
-    try {
-      const dto = (req as any).validatedData as ContentSecurityDto;
-      console.log("Creating Content Security with data:", dto);
+  const requestId = req.headers['x-request-id'] || Date.now().toString();
+  logger.info(`[CS-CTRL][${requestId}] [START] createContentSecurity`);
 
-      const upsert = await service.upsertContentSecurity(dto);
-      console.log("Content Security created successfully:", upsert);
+  try {
+    const dto = (req as any).validatedData as ContentSecurityDto;
+    logger.info(`[CS-CTRL][${requestId}] Validated Content Security DTO: ${JSON.stringify(dto)}`);
 
-      res.status(201).json(upsert);
+    const upsert = await service.upsertContentSecurity(dto);
+    logger.info(`[CS-CTRL][${requestId}] Content Security created/updated: ${JSON.stringify(upsert)}`);
 
-    } catch (err) {
-      console.error("Error creating Content Security:", err);
-      res.status(500).json({ error: (err as Error).message });
-    }
+    res.status(201).json(upsert);
+  } catch (err) {
+    logger.error(`[CS-CTRL][${requestId}] Failed to create Content Security`, {
+      message: (err as Error).message,
+      stack: (err as Error).stack,
+    });
+    res.status(500).json({ error: (err as Error).message });
+  } finally {
+    logger.info(`[CS-CTRL][${requestId}] [END] createContentSecurity`);
   }
+}
+
+
 
   /**
    * @swagger
@@ -188,22 +197,23 @@ export class ContentSecurityController {
    *         description: Server error
    */
   async filterContentSecurity(req: Request, res: Response) {
-    try {
-      const dto = (req as any).validatedData as ContentSecurityQueryDto;
-      console.log(`Filtering Content Security with msisdn: ${dto.msisdn}, service_id: ${dto.service_id}`);
+  const requestId = Date.now(); // simple request identifier for tracking
+  try {
+    const dto = (req as any).validatedData as ContentSecurityQueryDto;
+    logger.info(`[CS-CTRL][${requestId}] Filtering Content Security with msisdn: ${dto.msisdn}, service_id: ${dto.service_id}`);
 
-      const results = await service.filterContentSecurity(dto.msisdn, dto.service_id);
+    const results = await service.filterContentSecurity(dto.msisdn, dto.service_id);
 
-      if (!results || results.length === 0) {
-        console.warn(`No Content Security records found for msisdn: ${dto.msisdn}, service_id: ${dto.service_id}`);
-        return res.status(404).json({ error: "No records found" });
-      }
-
-      console.log("Filtered Content Security results:", results);
-      res.json(results);
-    } catch (err) {
-      console.error("Error filtering Content Security:", err);
-      res.status(500).json({ error: (err as Error).message });
+    if (!results || results.length === 0) {
+      logger.warn(`[CS-CTRL][${requestId}] No records found for msisdn: ${dto.msisdn}, service_id: ${dto.service_id}`);
+      return res.status(404).json({ error: "No records found" });
     }
+
+    logger.info(`[CS-CTRL][${requestId}] Found ${results.length} matching Content Security records`);
+    res.json(results);
+  } catch (err) {
+    logger.error(`[CS-CTRL][${requestId}] Error filtering Content Securities`, { error: (err as Error).message });
+    res.status(500).json({ error: (err as Error).message });
   }
+}
 }

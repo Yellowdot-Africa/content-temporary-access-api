@@ -2,6 +2,7 @@ import { AppDataSource } from "../config/db";
 import { ContentSecurityDto } from "../dtos/content-security.entity.dto";
 import { ContentSecurity } from "../models/content-security.entity";
 import { ContentSecurityResponse } from "../types/content-security-response";
+import { logger } from "../utils/logger";
 
 const repo = AppDataSource.getRepository(ContentSecurity);
 
@@ -14,16 +15,24 @@ export const upsertContentSecurity = async (data: ContentSecurityDto): Promise<C
   const expiry = new Date(now.getTime() + ACCESS_DURATION_MS);
 
   try {
-    console.log(`Upserting Content Security for msisdn: ${data.msisdn}`);
+    logger.info("Upserting Content Security", {
+      msisdn: data.msisdn,
+      service_id: data.service_id,
+    });
 
-    const existing = await repo.findOne({ where: { msisdn: data.msisdn, service_id: data.service_id } });
+    const existing = await repo.findOne({
+      where: { msisdn: data.msisdn, service_id: data.service_id },
+    });
 
     if (existing) {
-      // ✅ Already has access that’s still valid
+      // Already has valid access
       if (existing.expires_at && existing.expires_at > now) {
-        console.log(
-          `Access already granted for msisdn: ${data.msisdn} until ${existing.expires_at}`
-        );
+        logger.info("Access already valid", {
+          msisdn: existing.msisdn,
+          service_id: existing.service_id,
+          expires_at: existing.expires_at,
+        });
+
         return {
           message: "Access already granted for 24 hours",
           msisdn: existing.msisdn,
@@ -32,7 +41,7 @@ export const upsertContentSecurity = async (data: ContentSecurityDto): Promise<C
         };
       }
 
-      // ✅ Expired → update access
+      // Expired → update access
       const entity = repo.merge(existing, {
         ...data,
         expires_at: expiry,
@@ -40,7 +49,12 @@ export const upsertContentSecurity = async (data: ContentSecurityDto): Promise<C
       });
       const saved = await repo.save(entity);
 
-      console.log(`Updated Content Security for msisdn: ${data.msisdn}`);
+      logger.info("Updated expired access", {
+        msisdn: saved.msisdn,
+        service_id: saved.service_id,
+        expires_at: saved.expires_at,
+      });
+
       return {
         message: "Access updated for next 24 hours",
         msisdn: saved.msisdn,
@@ -49,7 +63,7 @@ export const upsertContentSecurity = async (data: ContentSecurityDto): Promise<C
       };
     }
 
-    // ✅ No record → create new
+    // New record
     const entity = repo.create({
       ...data,
       expires_at: expiry,
@@ -58,7 +72,12 @@ export const upsertContentSecurity = async (data: ContentSecurityDto): Promise<C
     });
     const saved = await repo.save(entity);
 
-    console.log(`Created Content Security for msisdn: ${data.msisdn}`);
+    logger.info("Created new Content Security record", {
+      msisdn: saved.msisdn,
+      service_id: saved.service_id,
+      expires_at: saved.expires_at,
+    });
+
     return {
       message: "New access granted for 24 hours",
       msisdn: saved.msisdn,
@@ -66,51 +85,80 @@ export const upsertContentSecurity = async (data: ContentSecurityDto): Promise<C
       expires_at: saved.expires_at,
     };
   } catch (error) {
-    console.error(
-      `Error upserting Content Security for msisdn: ${data.msisdn}`,
-      error
-    );
+    logger.error("Error upserting Content Security", {
+      msisdn: data.msisdn,
+      service_id: data.service_id,
+      error: (error as Error).message,
+    });
     throw error;
   }
 };
 
 export const listContentSecurities = async (): Promise<ContentSecurityResponse[]> => {
-  console.log("Listing Content Securities");
-  const records = await repo.find();
-  console.log(`Found ${records.length} records`);
+  try {
+    logger.info("Fetching all Content Security records");
 
-  return records.map((r) => ({
-    msisdn: r.msisdn,
-    service_id: r.service_id,
-    expires_at: r.expires_at,
-  }));
+    const records = await repo.find();
+
+    logger.info("Content Security records fetched", {
+      count: records.length,
+    });
+
+    return records.map((r) => ({
+      msisdn: r.msisdn,
+      service_id: r.service_id,
+      expires_at: r.expires_at,
+    }));
+  } catch (error) {
+    logger.error("Error listing Content Security records", {
+      error: (error as Error).message,
+    });
+    throw error;
+  }
 };
 
-export const filterContentSecurity = async (msisdn?: string, service_id?: string): Promise<ContentSecurityResponse[]> => {
-  if (!msisdn && !service_id) {
-    throw new Error("At least one of msisdn or service_id must be provided.");
+export const filterContentSecurity = async (
+  msisdn?: string,
+  service_id?: string
+): Promise<ContentSecurityResponse[]> => {
+  try {
+    if (!msisdn && !service_id) {
+      throw new Error("At least one of msisdn or service_id must be provided.");
+    }
+
+    logger.info("Filtering Content Security", {
+      msisdn,
+      service_id,
+    });
+
+    const whereClause: Partial<ContentSecurity> = {
+      ...(msisdn && { msisdn }),
+      ...(service_id && { service_id }),
+    };
+
+    const results = await repo.find({ where: whereClause });
+
+    if (!results.length) {
+      logger.warn("No Content Security records found", { msisdn, service_id });
+    } else {
+      logger.info("Filtered Content Security results found", {
+        count: results.length,
+        msisdn,
+        service_id,
+      });
+    }
+
+    return results.map((r) => ({
+      msisdn: r.msisdn,
+      service_id: r.service_id,
+      expires_at: r.expires_at,
+    }));
+  } catch (error) {
+    logger.error("Error filtering Content Security", {
+      msisdn,
+      service_id,
+      error: (error as Error).message,
+    });
+    throw error;
   }
-
-  console.log(
-    `Filtering Content Security with msisdn: ${msisdn}, service_id: ${service_id}`
-  );
-
-  const whereClause: Partial<ContentSecurity> = {
-    ...(msisdn && { msisdn }),
-    ...(service_id && { service_id }),
-  };
-
-  const results = await repo.find({ where: whereClause });
-
-  if (!results.length) {
-    console.warn(
-      `No records found for msisdn: ${msisdn}, service_id: ${service_id}`
-    );
-  }
-
-  return results.map((r) => ({
-    msisdn: r.msisdn,
-    service_id: r.service_id,
-    expires_at: r.expires_at,
-  }));
 };
