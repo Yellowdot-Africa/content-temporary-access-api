@@ -1,7 +1,8 @@
+import { createLogger, logger } from "../utils/logger";
 import { Request, Response } from "express";
-import * as service from "../services/content-security.service";
+import { contentSecurityService } from '../services/content-security.service'
 import { ContentSecurityDto, ContentSecurityQueryDto } from "../dtos/content-security.entity.dto";
-import { logger } from "../utils/logger";
+const log = createLogger("ContentSecurityController");
 
 /**
  * @swagger
@@ -57,7 +58,9 @@ import { logger } from "../utils/logger";
  *           example: "mtn_sa"
  */
 
+
 export class ContentSecurityController {
+
   /**
    * @swagger
    * /api/v1/content-security:
@@ -95,30 +98,25 @@ export class ContentSecurityController {
    *       500:
    *         description: Server error
    */
-  async createContentSecurity(req: Request, res: Response) {
-  const requestId = req.headers['x-request-id'] || Date.now().toString();
-  logger.info(`[CS-CTRL][${requestId}] [START] createContentSecurity`);
+  async createContentSecurity(req: Request, res: Response): Promise<void> {
+    log.info(`START createContentSecurity`);
 
-  try {
-    const dto = (req as any).validatedData as ContentSecurityDto;
-    logger.info(`[CS-CTRL][${requestId}] Validated Content Security DTO: ${JSON.stringify(dto)}`);
+    try {
+      const dto = (req as any).validatedData as ContentSecurityDto;
 
-    const upsert = await service.upsertContentSecurity(dto);
-    logger.info(`[CS-CTRL][${requestId}] Content Security created/updated: ${JSON.stringify(upsert)}`);
+      log.info(`Payload: ${JSON.stringify(dto)}`);
 
-    res.status(201).json(upsert);
-  } catch (err) {
-    logger.error(`[CS-CTRL][${requestId}] Failed to create Content Security`, {
-      message: (err as Error).message,
-      stack: (err as Error).stack,
-    });
-    res.status(500).json({ error: (err as Error).message });
-  } finally {
-    logger.info(`[CS-CTRL][${requestId}] [END] createContentSecurity`);
+      const upsert = await contentSecurityService.upsert(dto);
+      log.info(`SUCCESS: Content Security upserted - msisdn: ${upsert.msisdn}, service_id: ${dto.service_id}`);
+      res.status(201).json(upsert);
+
+    } catch (err) {
+      log.error('ERROR: Failed to create Content Security', err);
+      res.status(500).json({ error: (err as Error).message });
+    } finally {
+      log.info(`END createContentSecurity`);
+    }
   }
-}
-
-
 
   /**
    * @swagger
@@ -133,20 +131,19 @@ export class ContentSecurityController {
    *       500:
    *         description: Server error
    */
-  async getContentSecurity(_req: Request, res: Response) {
+  async getContentSecurity(_req: Request, res: Response): Promise<void> {
+    log.info(`START getContentSecurity`);
 
-    const requestId = Date.now(); // simple request identifier for tracking
     try {
-
-      logger.info(`[CS-CTRL][${requestId}] Fetching all Content Securities`);
-      const installs = await service.listContentSecurities();
-      console.log(`Fetched ${installs.length} Content Securities`);
-
+      const installs = await contentSecurityService.list();
+      log.info(`SUCCESS: Retrieved ${installs.length} Content Security records`);
       res.json(installs);
-    } catch (err) {
 
-      logger.error(`[CS-CTRL][${requestId}] Error fetching Content Securities:, error=${(err as Error).message}`, err);
+    } catch (err) {
+      log.error('ERROR: Failed to fetch Content Security records', err);
       res.status(500).json({ error: (err as Error).message });
+    } finally {
+      log.info(`END getContentSecurity`);
     }
   }
 
@@ -196,24 +193,29 @@ export class ContentSecurityController {
    *       500:
    *         description: Server error
    */
-  async filterContentSecurity(req: Request, res: Response) {
-  const requestId = Date.now(); // simple request identifier for tracking
-  try {
-    const dto = (req as any).validatedData as ContentSecurityQueryDto;
-    logger.info(`[CS-CTRL][${requestId}] Filtering Content Security with msisdn: ${dto.msisdn}, service_id: ${dto.service_id}`);
+  async filterContentSecurity(req: Request, res: Response): Promise<void> {
+    log.info(`START filterContentSecurity`);
 
-    const results = await service.filterContentSecurity(dto.msisdn, dto.service_id);
+    try {
+      const dto = (req as any).validatedData as ContentSecurityQueryDto;
+      log.info(`Filter params - msisdn: ${dto.msisdn ?? "N/A"}, service_id: ${dto.service_id ?? "N/A"}`);
 
-    if (!results || results.length === 0) {
-      logger.warn(`[CS-CTRL][${requestId}] No records found for msisdn: ${dto.msisdn}, service_id: ${dto.service_id}`);
-      return res.status(404).json({ error: "No records found" });
+      const results = await contentSecurityService.filter(dto.msisdn, dto.service_id);
+
+      if (!results || results.length === 0) {
+        log.warn(`No records found for msisdn: ${dto.msisdn ?? "N/A"}, service_id: ${dto.service_id ?? "N/A"}`);
+        res.status(404).json({ error: "No records found" });
+        return;
+      }
+
+      log.info(`SUCCESS: Found ${results.length} matching Content Security records`);
+      res.json(results);
+
+    } catch (err) {
+      log.error('ERROR: Failed to filter Content Security', err);
+      res.status(500).json({ error: (err as Error).message });
+    } finally {
+      log.info(`END filterContentSecurity`);
     }
-
-    logger.info(`[CS-CTRL][${requestId}] Found ${results.length} matching Content Security records`);
-    res.json(results);
-  } catch (err) {
-    logger.error(`[CS-CTRL][${requestId}] Error filtering Content Securities`, { error: (err as Error).message });
-    res.status(500).json({ error: (err as Error).message });
   }
-}
 }
