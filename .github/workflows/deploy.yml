@@ -10,30 +10,30 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: 🔧 Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
 
-      - name: Install dependencies
+      - name: 📦 Install dependencies
         run: npm ci
 
-      - name: Build project
+      - name: 🔨 Build project
         run: npm run build
 
-      - name: Copy repo to server (includes dist/)
+      - name: 📤 Copy repo to server (only dist + package files)
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.DEPLOY_KEY_YD_TELECEL }}
-          source: "."
+          source: "dist/*,package*.json"
           target: "/home/${{ secrets.SSH_USER }}/PROJECTS/content-temporary-access-api"
 
-      - name: Configure and restart on server
+      - name: 🚀 Configure and restart on server
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -43,23 +43,27 @@ jobs:
             set -e
             cd /home/${{ secrets.SSH_USER }}/PROJECTS/content-temporary-access-api
 
-            # Create .env from whichever secret you use
-            echo "${{ secrets.ENV_FILE_CONTENTS }}" > .env
-            if [ ! -s .env ]; then
-              echo "${{ secrets.ENV_FILE }}" > .env
+            echo "🔑 Removing existing .env file if any..."
+            rm -f .env
+
+            echo "🔑 Writing .env file from ENV_FILE_CONTENTS secret..."
+            printf "%b" "${{ secrets.ENV_FILE_CONTENTS }}" > .env
+
+            echo "📦 Installing production dependencies..."
+            if command -v npm >/dev/null && npm -v | grep -qE '^[7-9]|1[0-9]'; then
+              npm ci --omit=dev
+            else
+              npm install --production
             fi
 
-            # Install only prod deps
-            npm ci --omit=dev
-
-            # Ensure build artifact exists (built in CI and copied up)
+            echo "🔍 Checking build artifact..."
             if [ ! -f dist/server.js ]; then
               echo "ERROR: dist/server.js not found. Make sure 'npm run build' ran before SCP."
               ls -la dist || true
               exit 1
             fi
 
-            # Restart (or first start) with updated env
+            echo "🔄 Restarting with PM2..."
             if pm2 describe content-temporary-access-api > /dev/null 2>&1; then
               pm2 restart content-temporary-access-api --update-env
             else
