@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import * as service from "../services/content-security.service";
 import { ContentSecurityDto, ContentSecurityQueryDto } from "../dtos/content-security.entity.dto";
+import { logger } from "../utils/logger";
 
 /**
  * @swagger
@@ -124,15 +125,18 @@ export class ContentSecurityController {
    *         description: Server error
    */
   async getContentSecurity(_req: Request, res: Response) {
-    try {
-      console.log("Fetching all Content Securities");
 
+    const requestId = Date.now(); // simple request identifier for tracking
+    try {
+
+      logger.info(`[CS-CTRL][${requestId}] Fetching all Content Securities`);
       const installs = await service.listContentSecurities();
       console.log(`Fetched ${installs.length} Content Securities`);
 
       res.json(installs);
     } catch (err) {
-      console.error("Error fetching Content Securities:", err);
+
+      logger.error(`[CS-CTRL][${requestId}] Error fetching Content Securities:, error=${(err as Error).message}`, err);
       res.status(500).json({ error: (err as Error).message });
     }
   }
