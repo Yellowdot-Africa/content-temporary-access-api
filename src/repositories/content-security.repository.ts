@@ -3,7 +3,8 @@ import { FindOptionsWhere, Repository } from "typeorm";
 import { ContentSecurity } from "../models/content-security.entity";
 import { ContentSecurityDto } from "../dtos/content-security.entity.dto";
 
-export class ContentSecurityRepository {
+class ContentSecurityRepository {
+  
   private repo: Repository<ContentSecurity>;
   private readonly ACCESS_DURATION_MS: number;
 

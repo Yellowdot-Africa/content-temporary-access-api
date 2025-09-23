@@ -5,7 +5,7 @@ import { createLogger } from "../utils/logger";
 
 const logger = createLogger("ContentSecurityService");
 
-export class ContentSecurityService {
+class ContentSecurityService {
 
   private toResponse(record: { msisdn: string; service_id: string; expires_at: Date | null }): ContentSecurityResponse {
     return {

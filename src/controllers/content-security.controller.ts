@@ -59,7 +59,7 @@ const log = createLogger("ContentSecurityController");
  */
 
 
-export class ContentSecurityController {
+ class ContentSecurityController {
 
   /**
    * @swagger
@@ -219,3 +219,5 @@ export class ContentSecurityController {
     }
   }
 }
+
+export const contentSecurityController = new ContentSecurityController();
