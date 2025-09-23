@@ -1,4 +1,4 @@
-import { createLogger, logger } from "../utils/logger";
+import { createLogger } from "../utils/logger";
 import { Request, Response } from "express";
 import { contentSecurityService } from '../services/content-security.service'
 import { ContentSecurityDto, ContentSecurityQueryDto } from "../dtos/content-security.entity.dto";
